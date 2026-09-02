@@ -1,0 +1,85 @@
+{
+  "lexicon": 1,
+  "id": "network.eurosky.payments.offer",
+  "defs": {
+    "main": {
+      "type": "record",
+      "description": "A creator's public price list: the support tiers they offer, and the payment issuers and services they authorize. At most one offer record per account (record key 'self'). Display prices are informational only — billing truth lives with the issuer's checkout. This record is intentionally public: it is a shop window.",
+      "key": "literal:self",
+      "record": {
+        "type": "object",
+        "required": ["tiers", "authorizedIssuers", "createdAt"],
+        "properties": {
+          "tiers": {
+            "type": "array",
+            "description": "The support tiers this creator offers.",
+            "items": { "type": "ref", "ref": "#tier" },
+            "minLength": 1,
+            "maxLength": 20
+          },
+          "authorizedIssuers": {
+            "type": "array",
+            "description": "DIDs of payment issuer services whose entitlement credentials apps should accept for this creator. An issuer not on this list must be treated as unauthorized regardless of signature validity.",
+            "items": { "type": "string", "format": "did" },
+            "minLength": 1,
+            "maxLength": 10
+          },
+          "authorizedServices": {
+            "type": "array",
+            "description": "DIDs of services acting on this creator's behalf (e.g. feed generators, labelers) that issuers should answer via checkEntitlement. Grants query standing only; implies no other authority.",
+            "items": { "type": "string", "format": "did" },
+            "maxLength": 20
+          },
+          "createdAt": { "type": "string", "format": "datetime" }
+        }
+      }
+    },
+    "tier": {
+      "type": "object",
+      "required": ["id", "name"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Stable identifier for this tier, unique within the offer. Referenced by entitlement credentials (ctx.tier). Must not be reused for a materially different offering; retire and add instead.",
+          "maxLength": 64
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable tier name (e.g. 'Gold').",
+          "maxLength": 640,
+          "maxGraphemes": 64
+        },
+        "description": {
+          "type": "string",
+          "description": "What supporters at this tier receive.",
+          "maxLength": 3000,
+          "maxGraphemes": 300
+        },
+        "price": { "type": "ref", "ref": "#price" }
+      }
+    },
+    "price": {
+      "type": "object",
+      "description": "Informational display price. Not authoritative for billing; the issuer's checkout is.",
+      "required": ["value", "currency"],
+      "properties": {
+        "value": {
+          "type": "integer",
+          "description": "Price in the currency's minor units (e.g. cents).",
+          "minimum": 0
+        },
+        "currency": {
+          "type": "string",
+          "description": "ISO 4217 currency code (e.g. 'EUR').",
+          "minLength": 3,
+          "maxLength": 3
+        },
+        "period": {
+          "type": "string",
+          "description": "Billing period for recurring tiers.",
+          "knownValues": ["month", "year", "once"]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "lexicon": 1,
+  "id": "network.eurosky.payments.badge",
+  "defs": {
+    "main": {
+      "type": "record",
+      "description": "An OPT-IN public declaration of support ('fan badge'). Purely decorative and strictly separable from the entitlement: creating it is an explicit user action, deleting it never affects the underlying entitlement, and it must never contain amounts, purchase details, or payment references. Apps must not require a badge for any functionality — the entitlement credential is the proof; the badge is the band t-shirt.",
+      "key": "tid",
+      "record": {
+        "type": "object",
+        "required": ["subject", "since", "createdAt"],
+        "properties": {
+          "subject": {
+            "type": "string",
+            "format": "did",
+            "description": "DID of the supported creator."
+          },
+          "tierName": {
+            "type": "string",
+            "description": "Optional human-readable tier name to display (e.g. 'Gold'). Never a tier id, price, or amount.",
+            "maxLength": 640,
+            "maxGraphemes": 64
+          },
+          "since": {
+            "type": "string",
+            "format": "datetime",
+            "description": "When the support relationship began, as the supporter chooses to state it."
+          },
+          "voucher": {
+            "type": "string",
+            "description": "Optional issuer countersignature: a compact JWS (typ 'entvch+jwt') over (supporter DID, subject, tierName), issued only at the supporter's explicit request. Lets apps display the badge as 'verified' by checking the signature against the issuer's DID document and the subject's authorizedIssuers — without querying anyone. A badge without a voucher is self-asserted and must be displayed as such.",
+            "maxLength": 4096
+          },
+          "createdAt": { "type": "string", "format": "datetime" }
+        }
+      }
+    }
+  }
+}

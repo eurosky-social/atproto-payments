@@ -1,0 +1,57 @@
+{
+  "lexicon": 1,
+  "id": "network.eurosky.payments.checkEntitlement",
+  "defs": {
+    "main": {
+      "type": "query",
+      "description": "Ask an issuer whether a subject currently holds an entitlement with a creator. STANDING REQUIRED: the caller must be either (a) the subject themselves, authenticated via an OAuth session with this issuer carrying the payments scope, or (b) a service listed in the creator's offer record authorizedServices, authenticated via atproto inter-service auth (JWT with lxm set to this NSID). All other callers receive NoStanding regardless of whether the subject or any entitlement exists — this endpoint must never function as an enumeration oracle for third parties.",
+      "parameters": {
+        "type": "params",
+        "required": ["subject", "creator"],
+        "properties": {
+          "subject": {
+            "type": "string",
+            "format": "did",
+            "description": "DID whose entitlement is being checked."
+          },
+          "creator": {
+            "type": "string",
+            "format": "did",
+            "description": "DID of the creator the entitlement is with."
+          },
+          "tier": {
+            "type": "string",
+            "description": "Optional tier id. If omitted, reports whether any tier is held.",
+            "maxLength": 64
+          }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["active"],
+          "properties": {
+            "active": { "type": "boolean" },
+            "tier": {
+              "type": "string",
+              "description": "Tier id currently held (highest, if several). Present only when active.",
+              "maxLength": 64
+            },
+            "expiresAt": {
+              "type": "string",
+              "format": "datetime",
+              "description": "End of the currently paid period. Present only when active."
+            }
+          }
+        }
+      },
+      "errors": [
+        {
+          "name": "NoStanding",
+          "description": "The caller is neither the subject nor a service designated by the creator. Returned uniformly, without revealing whether the subject or any entitlement exists."
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "name": "@atproto-payments/attest-core",
+  "version": "0.1.0",
+  "description": "Reference implementation of the payment attestation spec for ATProto: entitlement credentials (ent+jwt), badge vouchers (entvch+jwt), and the verification algorithm. Working name — final package name follows the namespace decision.",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "vectors": "npm run build && node scripts/generate-vectors.mjs"
+  },
+  "dependencies": {
+    "@atproto/crypto": "^0.5.4"
+  },
+  "devDependencies": {
+    "@types/node": "^26.3.0",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11"
+  }
+}

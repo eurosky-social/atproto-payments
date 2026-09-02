@@ -1,0 +1,23 @@
+packages:
+  - attest-core
+  - mock-issuer
+  - pilot
+
+allowBuilds:
+  better-sqlite3: true
+  cbor-extract: true
+  core-js: true
+  protobufjs: true
+  sharp: true
+
+# The spaces-alpha snapshots reference @atproto/lex* packages whose stable
+# publishes carry unrewritten workspace:* deps; pin the whole family to the
+# alpha dist-tag (same fix the official bulletin sample uses).
+overrides:
+  "@atproto/lex": alpha
+  "@atproto/lex-builder": alpha
+  "@atproto/lex-client": alpha
+  "@atproto/lex-document": alpha
+  "@atproto/lex-installer": alpha
+  "@atproto/lex-resolver": alpha
+  "@atproto/lex-schema": alpha

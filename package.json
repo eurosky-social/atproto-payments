@@ -1,0 +1,9 @@
+{
+  "name": "atproto-payments",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r build && pnpm -r test"
+  }
+}

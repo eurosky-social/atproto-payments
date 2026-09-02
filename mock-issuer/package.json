@@ -1,0 +1,27 @@
+{
+  "name": "@atproto-payments/mock-issuer",
+  "version": "0.1.0",
+  "description": "Mock payment issuer for demos and integration tests: fake ledger (settle/lapse/chargeback), getCredentials + checkEntitlement with standing rules, and the simplespace checkUserAccess socket for the ATProto Spaces managing-app policy. Never touches real money.",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "mock-issuer": "dist/main.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "start": "npm run build && node dist/main.js"
+  },
+  "dependencies": {
+    "@atproto/crypto": "^0.5.4",
+    "@atproto-payments/attest-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^26.3.0",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11"
+  }
+}

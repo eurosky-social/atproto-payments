@@ -1,0 +1,109 @@
+{
+  "description": "Interop vectors for the payment attestation draft spec. Verify each token with resolveVerificationMethod -> issuerDidKey and getOffer -> offer, at validation time verifyAt. Expected: OK or the listed error code.",
+  "spec": "spec/SPEC.md v0.1",
+  "issuer": "did:web:pay.example.com",
+  "kid": "did:web:pay.example.com#payments_attest",
+  "supporter": "did:plc:aaaaaaaaaaaaaaaaaaaaaaaa",
+  "creator": "did:plc:bbbbbbbbbbbbbbbbbbbbbbbb",
+  "cases": [
+    {
+      "name": "valid-es256k",
+      "token": "eyJ0eXAiOiJlbnQrand0IiwiYWxnIjoiRVMyNTZLIiwia2lkIjoiZGlkOndlYjpwYXkuZXhhbXBsZS5jb20jcGF5bWVudHNfYXR0ZXN0In0.eyJpc3MiOiJkaWQ6d2ViOnBheS5leGFtcGxlLmNvbSIsInN1YiI6ImRpZDpwbGM6YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhIiwiY3R4Ijp7ImNyZWF0b3IiOiJkaWQ6cGxjOmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYiIsInRpZXIiOiJnb2xkIn0sImlhdCI6MTc4NTU0MjQwMCwiZXhwIjoxNzg2MTQ3MjAwLCJqdGkiOiJ2ZWMtZXMyNTZrLTAwMDEifQ.UngOmHZICyvWOa-JFUwF4dpMYd5MYd_vkEESnpRKd78Yk-ydPVIC0nKwaxyfZAefp5JY_negooRhslTzoKmDng",
+      "issuerDidKey": "did:key:zQ3shYXHmZKruerTKzMtx8XbJ3TBGkNnv9otx7vfBAvfXAPnF",
+      "offer": {
+        "tiers": [
+          {
+            "id": "gold",
+            "name": "Gold"
+          }
+        ],
+        "authorizedIssuers": [
+          "did:web:pay.example.com"
+        ],
+        "createdAt": "2026-08-01T00:00:00.000Z"
+      },
+      "verifyAt": "2026-08-01T12:00:00Z",
+      "expected": "OK"
+    },
+    {
+      "name": "valid-es256",
+      "token": "eyJ0eXAiOiJlbnQrand0IiwiYWxnIjoiRVMyNTYiLCJraWQiOiJkaWQ6d2ViOnBheS5leGFtcGxlLmNvbSNwYXltZW50c19hdHRlc3QifQ.eyJpc3MiOiJkaWQ6d2ViOnBheS5leGFtcGxlLmNvbSIsInN1YiI6ImRpZDpwbGM6YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhIiwiY3R4Ijp7ImNyZWF0b3IiOiJkaWQ6cGxjOmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYiIsInRpZXIiOiJnb2xkIn0sImlhdCI6MTc4NTU0MjQwMCwiZXhwIjoxNzg2MTQ3MjAwLCJqdGkiOiJ2ZWMtZXMyNTYtMDAwMSJ9.nQp_-Og53x90ccnIkX-w1utkxPevhdgsg3kGofv1YBgse9MjWRQiHDr9gLnBcqoadnMfNszgG94wkng8AwjGNA",
+      "issuerDidKey": "did:key:zDnaeUuBCqHQiXRgEdpLcwQdSNvGBjRK9rzbpYWSxuyBK8yxB",
+      "offer": {
+        "tiers": [
+          {
+            "id": "gold",
+            "name": "Gold"
+          }
+        ],
+        "authorizedIssuers": [
+          "did:web:pay.example.com"
+        ],
+        "createdAt": "2026-08-01T00:00:00.000Z"
+      },
+      "verifyAt": "2026-08-01T12:00:00Z",
+      "expected": "OK"
+    },
+    {
+      "name": "expired",
+      "token": "eyJ0eXAiOiJlbnQrand0IiwiYWxnIjoiRVMyNTZLIiwia2lkIjoiZGlkOndlYjpwYXkuZXhhbXBsZS5jb20jcGF5bWVudHNfYXR0ZXN0In0.eyJpc3MiOiJkaWQ6d2ViOnBheS5leGFtcGxlLmNvbSIsInN1YiI6ImRpZDpwbGM6YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhIiwiY3R4Ijp7ImNyZWF0b3IiOiJkaWQ6cGxjOmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYiIsInRpZXIiOiJnb2xkIn0sImlhdCI6MTc4NTU0MjQwMCwiZXhwIjoxNzg1NTQ2MDAwLCJqdGkiOiJ2ZWMtZXhwaXJlZC0wMDAxIn0.3qN8hVX7zJLYymNhuScvb8ZrxhuzmRvKdw1LCH_KhMpPei9USMS_F_zZy0oeE3xGilX21Yk3VqQ5-_nL8E7mIw",
+      "issuerDidKey": "did:key:zQ3shYXHmZKruerTKzMtx8XbJ3TBGkNnv9otx7vfBAvfXAPnF",
+      "offer": {
+        "tiers": [
+          {
+            "id": "gold",
+            "name": "Gold"
+          }
+        ],
+        "authorizedIssuers": [
+          "did:web:pay.example.com"
+        ],
+        "createdAt": "2026-08-01T00:00:00.000Z"
+      },
+      "verifyAt": "2026-08-02T00:00:00Z",
+      "expected": "EXPIRED"
+    },
+    {
+      "name": "issuer-not-authorized",
+      "token": "eyJ0eXAiOiJlbnQrand0IiwiYWxnIjoiRVMyNTZLIiwia2lkIjoiZGlkOndlYjpwYXkuZXhhbXBsZS5jb20jcGF5bWVudHNfYXR0ZXN0In0.eyJpc3MiOiJkaWQ6d2ViOnBheS5leGFtcGxlLmNvbSIsInN1YiI6ImRpZDpwbGM6YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhIiwiY3R4Ijp7ImNyZWF0b3IiOiJkaWQ6cGxjOmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYiIsInRpZXIiOiJnb2xkIn0sImlhdCI6MTc4NTU0MjQwMCwiZXhwIjoxNzg2MTQ3MjAwLCJqdGkiOiJ2ZWMtdW5hdXRoLTAwMDEifQ.9BiJecSUFgSbIadXSfCIq_RcABnbxmUk-USQJu2rh1kQgz-GGuB31LYdPwv4afgKp0IwUANMygmvI3TRfj-_4g",
+      "issuerDidKey": "did:key:zQ3shYXHmZKruerTKzMtx8XbJ3TBGkNnv9otx7vfBAvfXAPnF",
+      "offer": {
+        "tiers": [
+          {
+            "id": "gold",
+            "name": "Gold"
+          }
+        ],
+        "authorizedIssuers": [
+          "did:web:other-issuer.example"
+        ],
+        "createdAt": "2026-08-01T00:00:00.000Z"
+      },
+      "verifyAt": "2026-08-01T12:00:00Z",
+      "expected": "ISSUER_NOT_AUTHORIZED"
+    },
+    {
+      "name": "voucher-valid-es256k",
+      "token": "eyJ0eXAiOiJlbnR2Y2grand0IiwiYWxnIjoiRVMyNTZLIiwia2lkIjoiZGlkOndlYjpwYXkuZXhhbXBsZS5jb20jcGF5bWVudHNfYXR0ZXN0In0.eyJpc3MiOiJkaWQ6d2ViOnBheS5leGFtcGxlLmNvbSIsInN1YiI6ImRpZDpwbGM6YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhIiwiY3J0IjoiZGlkOnBsYzpiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmIiLCJ0biI6IkdvbGQiLCJpYXQiOjE3ODU1NDI0MDAsImp0aSI6InZlYy12b3VjaGVyLTAwMDEifQ.-R2-iI8cdjAAwkhMa-t1As3hwXsH83VBkkqiCEJ0N0EzDRC6r1NU-_ScZDnlnTuILqmH42DfXr0QYYbgPZvUjQ",
+      "issuerDidKey": "did:key:zQ3shYXHmZKruerTKzMtx8XbJ3TBGkNnv9otx7vfBAvfXAPnF",
+      "offer": {
+        "tiers": [
+          {
+            "id": "gold",
+            "name": "Gold"
+          }
+        ],
+        "authorizedIssuers": [
+          "did:web:pay.example.com"
+        ],
+        "createdAt": "2026-08-01T00:00:00.000Z"
+      },
+      "badge": {
+        "repoOwner": "did:plc:aaaaaaaaaaaaaaaaaaaaaaaa",
+        "subject": "did:plc:bbbbbbbbbbbbbbbbbbbbbbbb"
+      },
+      "verifyAt": "2026-08-01T12:00:00Z",
+      "expected": "OK"
+    }
+  ]
+}
