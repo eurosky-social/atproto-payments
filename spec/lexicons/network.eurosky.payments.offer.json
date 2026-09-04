@@ -4,39 +4,72 @@
   "defs": {
     "main": {
       "type": "record",
-      "description": "A creator's public price list: the support tiers they offer, and the payment issuers and services they authorize. At most one offer record per account (record key 'self'). Display prices are informational only — billing truth lives with the issuer's checkout. This record is intentionally public: it is a shop window.",
+      "description": "A creator's public price list: the support tiers they offer, the payment issuers and services they authorize, and what an app earns for distributing their work. At most one offer record per account (record key 'self'). Display prices are informational only — billing truth lives with the issuer's checkout. This record is intentionally public: it is a shop window.",
       "key": "literal:self",
       "record": {
         "type": "object",
-        "required": ["tiers", "authorizedIssuers", "createdAt"],
+        "required": [
+          "tiers",
+          "authorizedIssuers",
+          "createdAt"
+        ],
         "properties": {
           "tiers": {
             "type": "array",
             "description": "The support tiers this creator offers.",
-            "items": { "type": "ref", "ref": "#tier" },
+            "items": {
+              "type": "ref",
+              "ref": "#tier"
+            },
             "minLength": 1,
             "maxLength": 20
           },
           "authorizedIssuers": {
             "type": "array",
             "description": "DIDs of payment issuer services whose entitlement credentials apps should accept for this creator. An issuer not on this list must be treated as unauthorized regardless of signature validity.",
-            "items": { "type": "string", "format": "did" },
+            "items": {
+              "type": "string",
+              "format": "did"
+            },
             "minLength": 1,
             "maxLength": 10
           },
           "authorizedServices": {
             "type": "array",
             "description": "DIDs of services acting on this creator's behalf (e.g. feed generators, labelers) that issuers should answer via checkEntitlement. Grants query standing only; implies no other authority.",
-            "items": { "type": "string", "format": "did" },
+            "items": {
+              "type": "string",
+              "format": "did"
+            },
             "maxLength": 20
           },
-          "createdAt": { "type": "string", "format": "datetime" }
+          "gatedSpaces": {
+            "type": "array",
+            "description": "Permissioned spaces this creator gates, and what opens each. A space carries no display name of its own (it is addressed by type and record key), and a space listing is scoped to the account making it — so this record is where an app learns which spaces a creator gates and what to call them. Informational: the space's own policy decides access, not this list.",
+            "items": {
+              "type": "ref",
+              "ref": "#gatedSpace"
+            },
+            "maxLength": 20
+          },
+          "appShare": {
+            "type": "ref",
+            "ref": "#appShare",
+            "description": "What an app earns from payments to this creator. Absent means the issuer publishes no rate."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "datetime"
+          }
         }
       }
     },
     "tier": {
       "type": "object",
-      "required": ["id", "name"],
+      "required": [
+        "id",
+        "name"
+      ],
       "properties": {
         "id": {
           "type": "string",
@@ -55,17 +88,166 @@
           "maxLength": 3000,
           "maxGraphemes": 300
         },
-        "price": { "type": "ref", "ref": "#price" }
+        "kind": {
+          "type": "string",
+          "description": "What shape of thing this tier is, so an app knows which interface to render before it knows anything else: a recurring membership, a one-off tip with no entitlement, a digital good, or a physical good requiring fulfilment by the creator. Defaults to 'membership' when absent.",
+          "knownValues": [
+            "membership",
+            "support",
+            "digital",
+            "physical"
+          ]
+        },
+        "benefits": {
+          "type": "array",
+          "description": "Structured, renderable list of what this tier includes, so any app can display a consistent summary without parsing prose. Complements 'description'; never replaces the entitlement, which is decided by the issuer.",
+          "items": {
+            "type": "ref",
+            "ref": "#benefit"
+          },
+          "maxLength": 20
+        },
+        "prices": {
+          "type": "array",
+          "description": "Display prices for this tier. Several may coexist — one per currency and billing period. A tier with no unarchived price is not purchasable and apps SHOULD hide it.",
+          "items": {
+            "type": "ref",
+            "ref": "#price"
+          },
+          "maxLength": 20
+        },
+        "archived": {
+          "type": "boolean",
+          "description": "True when this tier is withdrawn from sale. Archived tiers are retained rather than deleted so outstanding credentials referencing the tier id stay interpretable. Apps MUST NOT offer an archived tier for purchase, and MUST continue to honour entitlements that reference it."
+        },
+        "archivedAt": {
+          "type": "string",
+          "format": "datetime"
+        }
+      }
+    },
+    "benefit": {
+      "type": "object",
+      "description": "One thing a tier includes, in a form an app can render as a list item.",
+      "required": [
+        "label"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "description": "Coarse category, for iconography and grouping. Open set; unknown values MUST render as plain text.",
+          "knownValues": [
+            "content",
+            "community",
+            "updates",
+            "recognition",
+            "early_access",
+            "direct_messages",
+            "physical_goods",
+            "discount"
+          ]
+        },
+        "label": {
+          "type": "string",
+          "description": "Short human-readable benefit (e.g. 'Monthly listening session').",
+          "maxLength": 640,
+          "maxGraphemes": 64
+        }
+      }
+    },
+    "gatedSpace": {
+      "type": "object",
+      "description": "One gated space. Spaces are modelled by the kind of content they hold rather than by audience — who may read is the policy's job — so a creator may gate several with the same issuer, opened by different tiers.",
+      "required": [
+        "space",
+        "name"
+      ],
+      "properties": {
+        "space": {
+          "type": "string",
+          "description": "Space reference: at://{authority}/space/{spaceType}/{recordKey}.",
+          "maxLength": 512
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable name for the space (e.g. 'Photos').",
+          "maxLength": 640,
+          "maxGraphemes": 64
+        },
+        "description": {
+          "type": "string",
+          "description": "What supporters find in it.",
+          "maxLength": 3000,
+          "maxGraphemes": 300
+        },
+        "contentTypes": {
+          "type": "array",
+          "description": "Lexicon ids of the record types this space contains. This is what lets an app decide whether it can render the content at all before offering it for sale: an app compares this list against the types it can display and computes its coverage. A photo app should not sell access to a space of long-form documents. Advisory and creator-declared: an app MUST tolerate encountering an unlisted type, and MUST NOT treat the list as an access rule.",
+          "items": {
+            "type": "string",
+            "format": "nsid"
+          },
+          "maxLength": 20
+        },
+        "tiers": {
+          "type": "array",
+          "description": "Tier ids (see #tier) whose entitlement opens this space. Absent or empty means any entitlement for this creator opens it.",
+          "items": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "maxLength": 20
+        }
+      }
+    },
+    "appShare": {
+      "type": "object",
+      "description": "What an app earns from payments to this creator: the pot set aside for the apps that originated and delivered a sale. Deliberately silent on whose money it is — an issuer may carve it out of its own take, or have the creator fund it on top; that is a commercial model rather than a protocol fact, and two issuers can interoperate while funding it differently. Where the creator does bear it, the issuer must show it in their all-in cost. Informational here: the issuer's ledger is what actually pays. There is deliberately no matching or auction mechanism — this is a posted price, not a market.",
+      "required": [
+        "rate"
+      ],
+      "properties": {
+        "rate": {
+          "type": "integer",
+          "description": "Share in basis points (100 = 1%). Issuers that let creators set their own publish a permitted band and reject anything outside it; the band is what keeps this a distribution cost rather than a bidding war for placement.",
+          "minimum": 0,
+          "maximum": 1500
+        },
+        "originationWindowMonths": {
+          "type": "integer",
+          "description": "How long the origination share trails a subscription the app converted, in months. Bounded on purpose: it caps the creator's exposure at rate x window, and it stops an app being paid indefinitely for a conversion after it has stopped delivering anything — entitlements are portable, so the app that sold a subscription is routinely not the app serving it two years later. Defaults to the issuer's published default when absent.",
+          "minimum": 0,
+          "maximum": 60
+        },
+        "effectiveFrom": {
+          "type": "string",
+          "format": "datetime",
+          "description": "When 'rate' begins to apply to delivery, where the rate can change. A rate increase MAY take effect immediately; a reduction MUST carry a notice period (issuers publish theirs) so an app that built an audience around this creator can decide whether to keep carrying them. Until this moment, 'previousRate' governs delivery. An issuer whose rate is instance-wide omits this and 'previousRate' entirely."
+        },
+        "previousRate": {
+          "type": "integer",
+          "description": "The delivery rate still in force until 'effectiveFrom', in basis points. Present only while a reduction is pending, so an app can read a pending cut from the record itself rather than by walking repo history.",
+          "minimum": 0,
+          "maximum": 1500
+        }
       }
     },
     "price": {
       "type": "object",
-      "description": "Informational display price. Not authoritative for billing; the issuer's checkout is.",
-      "required": ["value", "currency"],
+      "description": "Informational display price. Not authoritative for billing; the issuer's checkout is. A tier may carry several — one per currency and period — so that a price can be superseded without breaking references held by existing subscribers.",
+      "required": [
+        "value",
+        "currency"
+      ],
       "properties": {
+        "lookupKey": {
+          "type": "string",
+          "description": "Stable identifier for this price within the tier, so a price can be replaced without changing what existing subscribers reference. Reuse across materially different prices is forbidden for the same reason tier ids are not reused.",
+          "maxLength": 64
+        },
         "value": {
           "type": "integer",
-          "description": "Price in the currency's minor units (e.g. cents).",
+          "description": "Price in the currency's minor units (e.g. cents). With 'customAmount' enabled this is the suggested amount.",
           "minimum": 0
         },
         "currency": {
@@ -77,7 +259,46 @@
         "period": {
           "type": "string",
           "description": "Billing period for recurring tiers.",
-          "knownValues": ["month", "year", "once"]
+          "knownValues": [
+            "month",
+            "year",
+            "once"
+          ]
+        },
+        "customAmount": {
+          "type": "ref",
+          "ref": "#customAmount",
+          "description": "Present when the supporter chooses what to pay."
+        },
+        "archived": {
+          "type": "boolean",
+          "description": "True when this price is withdrawn from sale. Retained rather than deleted so existing subscribers keep the price they signed up at. Apps MUST NOT offer an archived price for new purchases."
+        },
+        "archivedAt": {
+          "type": "string",
+          "format": "datetime"
+        }
+      }
+    },
+    "customAmount": {
+      "type": "object",
+      "description": "Pay-what-you-want, with a floor. The floor exists because a payment below the rail's fixed fee costs the creator money to accept.",
+      "required": [
+        "enabled"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "minimum": {
+          "type": "integer",
+          "description": "Smallest acceptable amount in minor units. Issuers enforce their own floor as well and MAY reject a lower one.",
+          "minimum": 0
+        },
+        "maximum": {
+          "type": "integer",
+          "description": "Largest acceptable amount in minor units, if the creator caps it.",
+          "minimum": 0
         }
       }
     }

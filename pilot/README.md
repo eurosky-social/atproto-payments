@@ -20,10 +20,12 @@ Revocation semantics worth noticing: outstanding space credentials live ≤2h (0
 
 ## Scripts (PDS-agnostic: local dev-env or the hosted alpha)
 
+- `pnpm e2e` — **the integrated proof**: boots a local PLC + spaces PDS, spawns
+  the actual Rails demo-backend wired to them, and drives deny → subscribe →
+  gated read → lapse → deny. Verified green.
 - `pnpm create-account` / `pnpm setup-space` / `pnpm read-space` — the same
-  flow against any spaces PDS rather than the in-process one (env `PDS_URL`,
-  credentials, `MANAGING_APP`). Point `MANAGING_APP` at any issuer that answers
-  `com.atproto.simplespace.checkUserAccess`; `pnpm start` runs the mock one.
+  flow against any spaces PDS (env `PDS_URL`, credentials, `MANAGING_APP`);
+  used for the hosted-alpha encore, see [../docs/dev/DEMO.md](../docs/dev/DEMO.md).
 
 ## Alpha caveats
 

@@ -63,4 +63,4 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 
 **Admin (demo only):** `GET /admin/identity`, `GET /admin/state`, `POST /admin/sessions` (bearer for a DID), `POST /admin/services` (register a service DID → did:key), `POST /admin/offers` (creator's `authorizedServices`), `POST /admin/entitlements` (settle), `POST /admin/lapse`, `POST /admin/chargeback`, `POST /admin/spaces` (space URI → creator), `POST /admin/voucher` (badge countersignature).
 
-What real infrastructure replaces per piece: sessions → atproto OAuth with the payments scope; `/admin/services` and `/admin/offers` → resolving DID documents and the creator's offer record from their PDS; `/admin/entitlements` → real settlement events from whatever payment rail the issuer runs on. The XRPC surface is what stays.
+What real infrastructure replaces per piece: sessions → atproto OAuth with the payments scope; `/admin/services` and `/admin/offers` → resolving DID documents and the creator's offer record from their PDS; `/admin/entitlements` → Mangopay-class wallet events. The XRPC surface is what stays.

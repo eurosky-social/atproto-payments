@@ -32,13 +32,24 @@ export const createSpaceWithManagingApp = async (
 
 export const writeGatedPost = async (
   agent: AtpAgent,
-  opts: { space: string; repo: string; collection: string; text: string },
+  opts: { space: string; repo: string; collection: string; text: string; image?: Uint8Array },
 ): Promise<{ uri: string; rkey: string }> => {
+  const record: Record<string, unknown> = {
+    $type: opts.collection,
+    text: opts.text,
+    createdAt: new Date().toISOString(),
+  }
+  if (opts.image) {
+    // An ordinary blob on the creator's PDS; embedding it in a space record is
+    // what puts it behind the doorman.
+    const blob = await agent.com.atproto.repo.uploadBlob(opts.image, { encoding: 'image/png' })
+    record.image = blob.data.blob
+  }
   const post = await agent.com.atproto.space.createRecord({
     space: opts.space as never,
     repo: opts.repo as never,
     collection: opts.collection,
-    record: { $type: opts.collection, text: opts.text, createdAt: new Date().toISOString() },
+    record: record as never,
   })
   const uri = String(post.data.uri)
   return { uri, rkey: uri.split('/').pop() as string }
