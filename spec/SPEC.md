@@ -194,7 +194,22 @@ An app or service receiving a presented credential MUST:
 
 ## 11. Interop and open questions (for reconciliation with attested.network)
 
-1. Record-shape reconciliation: can attested's existing public attestation records map onto the badge (+voucher) so current PoC data migrates cleanly?
+1. **Record-shape reconciliation — mapped 2026-09-04** against the seven lexicons published at `at://did:plc:cq3w3bw7awp2rkeswfdzoubb/com.atproto.lexicon.schema/network.attested.payment.*` (dated 2026-04-13). The two designs decompose the same problem differently rather than conflicting:
+
+   | Concern | `network.attested.payment.*` | Here | Reconcilable? |
+   |---|---|---|---|
+   | Which issuers a creator trusts | Ordered broker DID list in the creator's **DID document**, each with an `#AttestedNetwork` service entry | `offer/self` → `authorizedIssuers` (a repo record) | **Yes, and ours is the cheaper edit.** Same semantics, different home; a repo write beats a DID-document operation for a revocation path that must be fast. An issuer MAY publish both |
+   | What is on sale, at what price | **Out of scope** by their own Scope section | The offer record (tiers, prices, `kind`, `benefits`, `gatedSpaces`) | **No conflict** — this fills a hole they marked deliberately |
+   | The payment fact | `oneTime` / `recurring` / `scheduled` record in the **payer's repo**, `signatures[]` → `strongRef` to proof records | Not on protocol at all; the ledger stays with the issuer | **No.** This is the one structural incompatibility (§8). We cannot be fully attested-compliant by construction |
+   | Attestation by a third party | `payment.proof` in the attestor's repo: `cid` + optional free-string `status` | Entitlement credential (§3), private, never in a repo | Different mechanism, same job |
+   | Public claim of support | The payment record itself, carrying payer, recipient, amount and currency | `badge` + `voucher` (§4): creator DID and a display tier name, no amounts | **Yes, one-way.** An attested payment record can be reduced to a badge; a badge cannot be expanded back into one, by design |
+   | Revocation | Broker deletes or updates its `proof` record | Credential expiry ≤7 days + issuer stops reissuing (§3.3) | Both are "absence is revocation" |
+   | Subscription expiry | **Absent from the schema.** `recurring` has no end-date field; `proof` schemas only `cid` and `status` | `exp` ≤ min(iat+7d, end of paid period), normative | Ours is strictly more specified |
+   | Third-party queries | `payment.lookup` takes required `payer` + `recipient` DIDs and **declares no auth** | `checkEntitlement` behind the standing rule (§5.2) | **No.** An unauthenticated `lookup` is the surveillance API §5.2 exists to prevent |
+
+   Two defects worth reporting upstream regardless of whether the specs converge: their prose describes `signatures[]` as accepting *"inline or `com.atproto.repo.strongRef`"* entries while the published schema permits `strongRef` only; and the `validUntil` field offered in the forum as the answer to subscription expiry does not exist in `payment.proof`.
+
+   Remaining question: adopt their vocabulary (**broker**, **payment servicer**, **recipient**, **supporter**) in place of ours (**issuer**, **creator**, **supporter**)? Theirs is inconsistent within their own documents — a critique already raised in the forum — but it has priority, and conceding vocabulary is cheap where we are not conceding structure.
 2. Final namespace and steward (Eurosky offered as neutral home) — blocks nothing in this draft.
 3. Payments OAuth scope naming — should align with whatever permission-set conventions the atproto OAuth work lands on.
 4. Voucher semantics: is "verified at issue time, no expiry" acceptable to Graze's badge UX, or do they want renewable vouchers?
