@@ -98,9 +98,13 @@ export const createMockIssuer = (identity: IssuerIdentity): MockIssuer => {
     const url = new URL(req.url ?? '/', 'http://mock')
     const { pathname } = url
 
-    // ── XRPC: getCredentials — OAuth-as-supporter only ────────────────────
+    // ── XRPC: getCredentials — the supporter, and nobody else ─────────────
+    // Two ways to be the supporter (SPEC §5.0): a session this issuer minted,
+    // or a service-auth token the supporter's OWN PDS signed. The second is
+    // the floor every issuer must accept, and the reason an app needs nothing
+    // from us before it can ask on its user's behalf.
     if (req.method === 'GET' && pathname === `/xrpc/${GET_CREDENTIALS}`) {
-      const subject = bearerDid(req)
+      const subject = bearerDid(req) ?? (await serviceCaller(req, GET_CREDENTIALS))
       if (!subject) return xrpcError(res, 401, 'AuthenticationRequired', 'a supporter session is required')
       const creatorFilter = url.searchParams.get('creator') ?? undefined
       const active = ledger
@@ -130,11 +134,14 @@ export const createMockIssuer = (identity: IssuerIdentity): MockIssuer => {
         return xrpcError(res, 400, 'InvalidRequest', 'subject and creator must be DIDs')
       }
 
-      const asSubject = bearerDid(req)
-      let standing = asSubject === subject
+      let standing = bearerDid(req) === subject
       if (!standing) {
-        const service = await serviceCaller(req, CHECK_ENTITLEMENT)
-        standing = service !== null && (offers.get(creator)?.authorizedServices.includes(service) ?? false)
+        const caller = await serviceCaller(req, CHECK_ENTITLEMENT)
+        // (a) the subject, proven by their own PDS rather than by a session
+        // we issued; or (b) a service the creator designated.
+        standing =
+          caller === subject ||
+          (caller !== null && (offers.get(creator)?.authorizedServices.includes(caller) ?? false))
       }
       if (!standing) {
         // Uniform: no hint whether the subject or any entitlement exists.
@@ -151,11 +158,16 @@ export const createMockIssuer = (identity: IssuerIdentity): MockIssuer => {
     }
 
     // ── XRPC: simplespace checkUserAccess — the managing-app socket ───────
-    // Query per the permissioned-data branch lexicon: params space/user/clientId,
-    // output {authorized}, service-authed by the space authority.
+    // Query per the permissioned-data branch lexicon: params
+    // space/user/access/clientId, output {authorized}, service-authed by the
+    // space authority.
     if (req.method === 'GET' && pathname === `/xrpc/${CHECK_USER_ACCESS}`) {
       const space = url.searchParams.get('space')
       const user = url.searchParams.get('user')
+      // A space gates reading and writing separately since 2026-09-10, and the
+      // authority says which it is asking about. A host still on the older
+      // build sends nothing, and the only question it ever asked was read.
+      const access = url.searchParams.get('access') ?? 'read'
       if (typeof space !== 'string' || !isDid(user)) {
         return xrpcError(res, 400, 'InvalidRequest', 'space (space-ref) and user (DID) are required')
       }
@@ -166,6 +178,11 @@ export const createMockIssuer = (identity: IssuerIdentity): MockIssuer => {
       if (caller !== authority) {
         return xrpcError(res, 401, 'AuthenticationRequired', 'caller is not the space authority')
       }
+      // Only reading is a payments question. A subscription buys entry to a
+      // creator's space, never the right to put records in it — and the
+      // creator writes as the space's own authority, whom the host admits
+      // without asking anyone. An access kind we do not know is refused too.
+      if (access !== 'read') return json(res, 200, { authorized: false })
       const creator = ledger.creatorForSpace(space)
       if (!creator) return json(res, 200, { authorized: false })
       return json(res, 200, { authorized: ledger.active(user, creator) !== null })

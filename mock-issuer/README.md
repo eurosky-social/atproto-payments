@@ -57,8 +57,8 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 
 | Method | Auth | Behavior |
 |---|---|---|
-| `GET /xrpc/network.eurosky.payments.getCredentials` | supporter bearer session | Freshly minted `ent+jwt` cards for the caller's active entitlements. Lapsed/chargebacked entitlements simply stop appearing (SPEC §3.3). |
-| `GET /xrpc/network.eurosky.payments.checkEntitlement` | subject session OR service JWT (`lxm` bound) from a DID in the creator's `authorizedServices` | `{active, tier?, expiresAt?}`; everyone else gets uniform `NoStanding` (SPEC §5.2). |
+| `GET /xrpc/network.eurosky.payments.getCredentials` | supporter bearer session, or the supporter's own service-auth JWT (SPEC §5.0) | Freshly minted `ent+jwt` cards for the caller's active entitlements. Lapsed/chargebacked entitlements simply stop appearing (SPEC §3.3). |
+| `GET /xrpc/network.eurosky.payments.checkEntitlement` | the subject (session or their own service JWT) OR a service JWT (`lxm` bound) from a DID in the creator's `authorizedServices` | `{active, tier?, expiresAt?}`; everyone else gets uniform `NoStanding` (SPEC §5.2). |
 | `GET /xrpc/com.atproto.simplespace.checkUserAccess` | service JWT from the space's own authority | `{authorized}` from the ledger, via the space→creator mapping. The managing-app socket, matching the permissioned-data branch lexicon (query with `space`, `user`, `clientId?` params). |
 
 **Admin (demo only):** `GET /admin/identity`, `GET /admin/state`, `POST /admin/sessions` (bearer for a DID), `POST /admin/services` (register a service DID → did:key), `POST /admin/offers` (creator's `authorizedServices`), `POST /admin/entitlements` (settle), `POST /admin/lapse`, `POST /admin/chargeback`, `POST /admin/spaces` (space URI → creator), `POST /admin/voucher` (badge countersignature).

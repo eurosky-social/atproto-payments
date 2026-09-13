@@ -109,11 +109,13 @@ Decoded, that is all there is to it:
 
 Read it as a sentence: the *issuer* says *subject* Anna holds *context* Gold-with-Ben, from `iat` until `exp` (here: the end of the paid period, 2026-09-01 — capped at seven days regardless). Note what is **absent**: no amount, no invoice, no processor reference, and deliberately no `aud`, because the card is presented to arbitrary apps. `exp` is also the entire revocation story — on cancellation or chargeback the issuer simply stops reissuing, and the card ages out within days. No revocation lists exist.
 
-Anna's client keeps cards fresh by asking the issuer for them — the only caller allowed is Anna herself, via her OAuth session:
+Anna's client keeps cards fresh by asking the issuer for them — the only caller allowed is Anna herself, proving it the way ATProto already lets her prove anything: a short-lived token her own server signs, addressed to the issuer:
 
 ```jsonc
 // GET /xrpc/network.eurosky.payments.getCredentials?creator=did:plc:benexamplecreatorxyz4kq2
-// Authorization: Bearer <Anna's OAuth access token, payments scope>
+// Authorization: Bearer <service-auth JWT signed by Anna's PDS,
+//                        aud=did:web:pay.example.com,
+//                        lxm=network.eurosky.payments.getCredentials>
 {
   "credentials": [
     {
@@ -130,7 +132,7 @@ There are two ways the card turns into access:
 
 - *Anna shows the card.* An app wants to know if she can see Ben's subscriber feed; her client presents the credential. The app checks the signature — every DID, including the service's, has published public keys, so signatures verify offline — and checks the issuer is on Ben's accepted-providers list. No server call at verification time, nothing published. (Presenting the card to an app reveals the relationship *to that app* — consent by use.) The one rule implementers must not skip: the card is a *statement about* `sub`, not a password — an app honors it only for its logged-in account, so a stolen card is worthless.
 
-- *A server asks the issuer.* Ben's paid feed generator queries the service's API: "does Anna's DID currently hold Gold with Ben?" — yes/no. Iron rule: **the endpoint answers only parties with standing** — Anna herself (via OAuth-granted permission) or Ben's own services (the ones listed in `authorizedServices` above, authenticating with ATProto inter-service auth). A random third party cannot ask "what does Anna subscribe to?" Without this rule, the public surveillance dataset would be deleted from the repos and rebuilt as an API.
+- *A server asks the issuer.* Ben's paid feed generator queries the service's API: "does Anna's DID currently hold Gold with Ben?" — yes/no. Iron rule: **the endpoint answers only parties with standing** — Anna herself (proving her DID as above) or Ben's own services (the ones listed in `authorizedServices` above, authenticating with ATProto inter-service auth). A random third party cannot ask "what does Anna subscribe to?" Without this rule, the public surveillance dataset would be deleted from the repos and rebuilt as an API.
 
 ```jsonc
 // GET /xrpc/network.eurosky.payments.checkEntitlement
@@ -164,8 +166,8 @@ The card lives in one app's storage, so a second app does not inherit Anna's cop
 **The entitlement is portable. The token is not.** The card is a short-lived materialization of a fact that lives in the issuer's ledger, keyed to Anna's DID. Any app Anna authorizes mints its own:
 
 ```
-App A  ──OAuth as Anna──▶  issuer getCredentials ──▶  card (exp ≤ 7d)   held by App A
-App B  ──OAuth as Anna──▶  issuer getCredentials ──▶  card (exp ≤ 7d)   held by App B
+App A  ──Anna's PDS vouches──▶  issuer getCredentials ──▶  card (exp ≤ 7d)   held by App A
+App B  ──Anna's PDS vouches──▶  issuer getCredentials ──▶  card (exp ≤ 7d)   held by App B
                                     ▲
                        one ledger row, keyed by Anna's DID
 ```
@@ -174,12 +176,14 @@ Both cards say the same thing because both come from the same row. Nothing app-s
 
 **There is no point making the storage portable.** `exp ≤ 7 days` is the revocation mechanism (§3.3), so every app needs a live mint path regardless; a card copied from another app would go stale within the week and have to be re-fetched anyway. Storage is a cache. This is why the spec treats per-app cards as the *stronger* option rather than a limitation — see SPEC.md §11 Q6 on DPoP binding, which would make per-app cards explicit and replay-proof.
 
-**The cost, stated honestly:** one OAuth grant per app, at the issuer — Anna authorizes a new app against the issuer once, the same consent step she already performs against her PDS, and renewal is silent afterwards. Two things keep that cost small:
+**The cost, stated honestly:** an app needs no relationship with the issuer at all. The proof it presents is minted by Anna's own PDS, which it already holds her session with, so there is no client registration at a payment service, no per-app grant, and nothing to re-consent when she adds a fourth client — SPEC.md §5.0 makes that the interoperable floor every issuer must accept. What it gives up is a *separate* consent moment at the issuer: an app Anna signed into can learn which creators she supports without asking her again. The consent that governs it is the one she already gave her PDS, which is where every other thing that app can see about her is governed too, and presenting a card to an app reveals the same fact anyway (consent by use). An issuer that wants the extra moment may run an OAuth server in addition.
 
-- **Server-side gating skips it entirely.** Ben's feed generator uses `checkEntitlement` with its own service auth; Anna's client is never in the loop, so a brand-new app shows her Ben's paid feed with no setup at all. Most gated content works this way.
-- **Spaces skips it too.** The doorman asks the issuer at key-mint time (Part A2); no card appears in that flow.
+Two things mean most apps never touch cards at all:
 
-So the per-app grant is really only the price of *offline, client-side* perks — badges, in-app unlocks — which are the low-stakes cases. One loose end: an app can resolve *creator → issuers* from the offer record, but there is no defined way to discover *which issuers a supporter holds sessions with*; in practice an app tries the creator's `authorizedIssuers` and sees which answers (SPEC.md §11 Q8).
+- **Server-side gating skips them entirely.** Ben's feed generator uses `checkEntitlement` with its own service auth; Anna's client is never in the loop, so a brand-new app shows her Ben's paid feed with no setup at all. Most gated content works this way.
+- **Spaces skips them too.** The doorman asks the issuer at key-mint time (Part A2); no card appears in that flow.
+
+Cards are really the instrument for *offline, client-side* perks — badges, in-app unlocks. One loose end: an app can resolve *creator → issuers* from the offer record, but there is no defined way to discover *which issuers hold a supporter's entitlements*; in practice an app tries the creator's `authorizedIssuers` and sees which answers (SPEC.md §11 Q8).
 
 ### Piece 3 — the fan badge (public, strictly opt-in)
 
@@ -258,13 +262,15 @@ Two honest limitations. First, this is **access control, not secrecy**: the serv
 
 **The crucial question — how does the doorman decide who gets in?** Three modes: let everyone in ("public"), keep a guest list the authority maintains ("member list"), or — the interesting one — **"ask an app"** (`managing-app`): the doorman phones a designated service every single time and asks "should this person get in?"
 
+**A room has two doors, and only one of them is a payments question.** Since 2026-09-10 a space sets its modes separately for reading (`readPolicy`) and writing (`writePolicy`), and the doorman says which door it is asking about. Payments answer the reading door: a subscription buys Anna entry to Ben's room, not the right to leave things in it. So a gated space should set its writing door to a guest list nobody is added to, and its issuer should answer no to every write the doorman asks about. Ben is unaffected — he is the room's authority, and a host never makes an authority ask permission to enter its own room. Were an issuer to answer the writing door from the ledger, every supporter Ben has would quietly become a contributor to his space.
+
 ### Where the payment layer folds in
 
 Ben's subscriber-only photo feed lives in a space. So the doorman's question — *"should Anna get in?"* — is really *"is Anna paying Ben?"*. And exactly one party in the ecosystem knows the true, current answer: the payment service's ledger.
 
-**The elegant wiring:** Ben sets his room's policy to "ask my issuer." Every time any app requests a room key for anyone, the doorman calls that issuer (`checkUserAccess`), the issuer looks at its ledger, and answers yes or no. That's the whole integration. Anna subscribes → next key request, yes. She cancels or a chargeback lands → next key request, no — within hours, automatically, with no lists to keep in sync anywhere. Billing truth and access truth become the same thing. And this isn't bending the protocol: Bluesky's own spec gives "paid-subscription status" as its example of what this mode is *for*. They built the room and the doorman; the doorman just has no connection to actual money. This spec is that connection.
+**The elegant wiring:** Ben sets his room's *reading* policy to "ask my issuer." Every time any app requests a room key for anyone, the doorman calls that issuer (`checkUserAccess`), the issuer looks at its ledger, and answers yes or no. That's the whole integration. Anna subscribes → next key request, yes. She cancels or a chargeback lands → next key request, no — within hours, automatically, with no lists to keep in sync anywhere. Billing truth and access truth become the same thing. And this isn't bending the protocol: Bluesky's own spec gives "paid-subscription status" as its example of what this mode is *for*. They built the room and the doorman; the doorman just has no connection to actual money. This spec is that connection.
 
-**The backup wiring:** guest-list mode, where Ben grants the issuer permission to add and remove names as payments settle and lapse. Slower to react, but the list keeps working even if the issuer is briefly unreachable. Which mode the standard should recommend is an open question (SPEC.md §11 Q7).
+**The backup wiring:** guest-list mode, where Ben grants the issuer permission to put and remove names on the list as payments settle and lapse. Slower to react, but the list keeps working even if the issuer is briefly unreachable. Which mode the standard should recommend is an open question (SPEC.md §11 Q7).
 
 **And the membership card from Part A?** It stays, with two jobs. Outside the spaces world it remains the portable proof it always was — for paid feeds, in-app perks, and every app or creator that doesn't use spaces (spaces are in alpha; the card works today). Inside the spaces world it becomes the billing-side receipt behind those yes/no answers. Amounts, invoices, and payment history still never touch the protocol in either world.
 

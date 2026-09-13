@@ -1,0 +1,22 @@
+{
+  "description": "An entitlement credential minted by a Rails implementation of this spec, with the public key from its DID document. Verify with attest-core: resolveVerificationMethod -> issuerDidKey, getOffer -> offer, at verifyAt.",
+  "spec": "spec/SPEC.md §3",
+  "mintedAt": "2026-09-13T17:43:29Z",
+  "token": "eyJ0eXAiOiJlbnQrand0IiwiYWxnIjoiRVMyNTZLIiwia2lkIjoiZGlkOndlYjpwYXkuZXhhbXBsZS5jb20jcGF5bWVudHNfYXR0ZXN0In0.eyJpc3MiOiJkaWQ6d2ViOnBheS5leGFtcGxlLmNvbSIsInN1YiI6ImRpZDpwbGM6YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhIiwiY3R4Ijp7ImNyZWF0b3IiOiJkaWQ6cGxjOmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYiIsInRpZXIiOiJnb2xkIn0sImlhdCI6MTc4OTMyMTQwOSwiZXhwIjoxNzg5OTI2MjA5LCJqdGkiOiIwZTFkYjQ1YTgwNWNlNjUyZDFiOGMxMmJiMGEyODgxZiJ9.ESA63wqw_8LUKV7Zf6WRodMSo1EspPsdd4kslNl8ackgWS04JJBr4xF9YfN_qu1PnoRcYLUJydlR9dPXT6G77A",
+  "issuerDidKey": "did:key:zQ3shV3oKDEidcGAXfCso25iemtinRwtVMrdDxrKcN4g62aiL",
+  "kid": "did:web:pay.example.com#payments_attest",
+  "subject": "did:plc:aaaaaaaaaaaaaaaaaaaaaaaa",
+  "offer": {
+    "tiers": [
+      {
+        "id": "gold",
+        "name": "Gold"
+      }
+    ],
+    "authorizedIssuers": [
+      "did:web:pay.example.com"
+    ],
+    "createdAt": "2026-09-13T17:43:29.886Z"
+  },
+  "verifyAt": "2026-09-13T18:43:29Z"
+}

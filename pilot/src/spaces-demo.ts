@@ -24,7 +24,11 @@ export const createSpaceWithManagingApp = async (
   const created = await agent.com.atproto.simplespace.createSpace({
     type: opts.type,
     skey: opts.skey,
-    policy: { $type: 'com.atproto.simplespace.defs#managingAppPolicy', managingApp: opts.managingApp },
+    readPolicy: { $type: 'com.atproto.simplespace.defs#managingAppPolicy', managingApp: opts.managingApp },
+    // Only Ben writes here. A member-list policy over a list nobody is on
+    // refuses everyone else, and Ben needs no entry: he is the space authority,
+    // whom the host admits without consulting the managing app.
+    writePolicy: { $type: 'com.atproto.simplespace.defs#memberListPolicy' },
     appAccess: { $type: 'com.atproto.simplespace.defs#open' },
   })
   return created.data.uri

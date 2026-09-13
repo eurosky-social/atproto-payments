@@ -14,14 +14,14 @@
     "create-account": "pnpm build && node dist/create-account.js"
   },
   "dependencies": {
-    "@atproto/api": "0.0.0-spaces-alpha-20260818163953",
-    "@atproto/dev-env": "0.0.0-spaces-alpha-20260818163953",
+    "@atproto/api": "0.0.0-spaces-alpha-20260910230440",
+    "@atproto/dev-env": "0.0.0-spaces-alpha-20260910230440",
     "@atproto/jwk-jose": "^0.2.4",
-    "@atproto/space": "0.0.0-spaces-alpha-20260818163953",
+    "@atproto/space": "0.0.0-spaces-alpha-20260910230440",
     "@did-plc/lib": "0.0.1",
     "@atproto-payments/attest-core": "workspace:*",
     "@atproto-payments/mock-issuer": "workspace:*",
-    "@atproto/crypto": "0.0.0-spaces-alpha-20260818163953"
+    "@atproto/crypto": "0.0.0-spaces-alpha-20260910230440"
   },
   "devDependencies": {
     "@types/node": "^26.3.0",

@@ -10,14 +10,74 @@ allowBuilds:
   protobufjs: true
   sharp: true
 
+minimumReleaseAgeExclude:
+  - '@atproto-labs/did-resolver@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto-labs/fetch-node@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto-labs/handle-resolver-node@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto-labs/handle-resolver@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto-labs/opentelemetry-node@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto-labs/xrpc-utils@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/api@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/aws@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/bsky@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/car@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/common-web@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/common@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/crypto@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/dev-env@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/did@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/identity@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/lex-cbor@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/lex-data@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/lex-json@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/lexicon@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/oauth-provider-api@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/oauth-provider-ui@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/oauth-provider@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/oauth-scopes@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/oauth-types@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/ozone@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/pds@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/repo@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/space@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/sync@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/syntax@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/xrpc-server@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/xrpc@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/lex-builder@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/lex-client@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/lex-document@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/lex-installer@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/lex-resolver@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/lex-schema@0.0.0-spaces-alpha-20260910230440'
+  - '@atproto/lex@0.0.0-spaces-alpha-20260910230440'
+
 # The spaces-alpha snapshots reference @atproto/lex* packages whose stable
-# publishes carry unrewritten workspace:* deps; pin the whole family to the
-# alpha dist-tag (same fix the official bulletin sample uses).
+# publishes carry unrewritten workspace:* deps, so the whole family is pinned
+# here (the official bulletin sample uses the `alpha` dist-tag for this).
+#
+# **Pinned to the exact snapshot, not to `alpha`.** A floating tag re-resolves
+# only for packages pnpm has no lock entry for: bumping the pilot to the
+# 2026-09-10 snapshot left every already-locked `alpha` override on the
+# 2026-08-18 one and pulled the new ones forward, so `@atproto/pds` imported a
+# `@atproto/lex` that no longer had what it asked for and the pilot died at
+# startup on `does not provide an export named 'walk'`. One version string for
+# the family and for pilot/package.json keeps the tree coherent.
+#
+# The family also grows with the alpha: the 2026-09-10 snapshot added lex-cbor,
+# lex-data and lex-json, and install fails on the first one left out
+# ("@atproto/lex-data@workspace:*" is in the dependencies but no package named
+# … is present in the workspace). When a bump fails that way, the missing name
+# is in the error — add it here.
 overrides:
-  "@atproto/lex": alpha
-  "@atproto/lex-builder": alpha
-  "@atproto/lex-client": alpha
-  "@atproto/lex-document": alpha
-  "@atproto/lex-installer": alpha
-  "@atproto/lex-resolver": alpha
-  "@atproto/lex-schema": alpha
+  "@atproto/lex": 0.0.0-spaces-alpha-20260910230440
+  "@atproto/lex-builder": 0.0.0-spaces-alpha-20260910230440
+  "@atproto/lex-cbor": 0.0.0-spaces-alpha-20260910230440
+  "@atproto/lex-cli": 0.0.0-spaces-alpha-20260910230440
+  "@atproto/lex-client": 0.0.0-spaces-alpha-20260910230440
+  "@atproto/lex-data": 0.0.0-spaces-alpha-20260910230440
+  "@atproto/lex-document": 0.0.0-spaces-alpha-20260910230440
+  "@atproto/lex-installer": 0.0.0-spaces-alpha-20260910230440
+  "@atproto/lex-json": 0.0.0-spaces-alpha-20260910230440
+  "@atproto/lex-resolver": 0.0.0-spaces-alpha-20260910230440
+  "@atproto/lex-schema": 0.0.0-spaces-alpha-20260910230440

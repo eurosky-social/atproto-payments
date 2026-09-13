@@ -94,6 +94,22 @@ describe('settle → getCredentials → verify with attest-core', () => {
     const { status } = await get('/xrpc/network.eurosky.payments.getCredentials')
     expect(status).toBe(401)
   })
+
+  // SPEC §5.0: the proof an issuer must accept is the one the supporter's own
+  // PDS mints, so an app can ask on their behalf without ever registering here.
+  it('accepts a token the supporter\'s own PDS signed', async () => {
+    const annaKey = await Secp256k1Keypair.create()
+    issuer.registerService(ANNA, annaKey.did())
+    const jwt = await serviceJwt(
+      annaKey, ANNA, issuer.identity.did, 'network.eurosky.payments.getCredentials',
+    )
+
+    const { status, body } = await get('/xrpc/network.eurosky.payments.getCredentials', jwt)
+    expect(status).toBe(200)
+    expect(body.credentials).toHaveLength(1)
+    const claims = await verifyEntitlementCredential(body.credentials[0].token, verifierDeps())
+    expect(() => assertSubjectBinding(claims, ANNA)).not.toThrow()
+  })
 })
 
 describe('checkEntitlement standing rules', () => {
@@ -101,6 +117,17 @@ describe('checkEntitlement standing rules', () => {
 
   it('answers the subject themselves', async () => {
     const { status, body } = await get(path, annaToken)
+    expect(status).toBe(200)
+    expect(body).toMatchObject({ active: true, tier: 'gold' })
+  })
+
+  it('answers the subject proving themselves with their own PDS', async () => {
+    const annaKey = await Secp256k1Keypair.create()
+    issuer.registerService(ANNA, annaKey.did())
+    const jwt = await serviceJwt(
+      annaKey, ANNA, issuer.identity.did, 'network.eurosky.payments.checkEntitlement',
+    )
+    const { status, body } = await get(path, jwt)
     expect(status).toBe(200)
     expect(body).toMatchObject({ active: true, tier: 'gold' })
   })
@@ -184,6 +211,25 @@ describe('checkUserAccess — the Spaces managing-app socket', () => {
     )
     const { status } = await get(path(SPACE), jwt)
     expect(status).toBe(401)
+  })
+
+  // Since 2026-09-10 the authority asks about reading and writing separately.
+  // An issuer that answers both from the ledger hands every paying supporter a
+  // writer's seat in the creator's space.
+  it('admits a paying supporter to read and still refuses the write', async () => {
+    await post('/admin/spaces', { space: SPACE, creator: BEN })
+    await post('/admin/entitlements', { subject: ANNA, creator: BEN, tier: 'gold' })
+    const jwt = await serviceJwt(authorityKey, BEN, issuer.identity.did, 'com.atproto.simplespace.checkUserAccess')
+
+    const read = await get(`${path(SPACE)}&access=read`, jwt)
+    expect(read.body).toEqual({ authorized: true })
+
+    const write = await get(`${path(SPACE)}&access=write`, jwt)
+    expect(write.body).toEqual({ authorized: false })
+
+    // A door we do not understand is a door we keep shut.
+    const other = await get(`${path(SPACE)}&access=administer`, jwt)
+    expect(other.body).toEqual({ authorized: false })
   })
 
   it('denies unknown spaces without leaking why', async () => {

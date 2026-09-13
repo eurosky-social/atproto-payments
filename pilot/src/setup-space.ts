@@ -1,6 +1,6 @@
 /**
  * Creator side, against any spaces PDS: create the subscriber space with
- * policy managing-app → the issuer backend, and write a gated post into it.
+ * readPolicy managing-app → the issuer backend, and write a gated post into it.
  *
  *   PDS_URL=… HANDLE=… PASSWORD=… MANAGING_APP='did:…#payments_issuer' \
  *     node dist/setup-space.js

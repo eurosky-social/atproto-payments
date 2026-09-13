@@ -4,7 +4,7 @@
   "defs": {
     "main": {
       "type": "query",
-      "description": "Ask an issuer whether a subject currently holds an entitlement with a creator. STANDING REQUIRED: the caller must be either (a) the subject themselves, authenticated via an OAuth session with this issuer carrying the payments scope, or (b) a service listed in the creator's offer record authorizedServices, authenticated via atproto inter-service auth (JWT with lxm set to this NSID). All other callers receive NoStanding regardless of whether the subject or any entitlement exists — this endpoint must never function as an enumeration oracle for third parties.",
+      "description": "Ask an issuer whether a subject currently holds an entitlement with a creator. STANDING REQUIRED: the caller must be either (a) the subject themselves, proving their DID per SPEC §5.0 (an atproto inter-service auth JWT signed by their own PDS, or an OAuth session with this issuer), or (b) a service listed in the creator's offer record authorizedServices, authenticated via atproto inter-service auth with lxm set to this NSID — a token bound to any other method is not standing for (b). All other callers receive NoStanding regardless of whether the subject or any entitlement exists — this endpoint must never function as an enumeration oracle for third parties.",
       "parameters": {
         "type": "params",
         "required": ["subject", "creator"],

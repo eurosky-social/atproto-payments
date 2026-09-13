@@ -4,7 +4,7 @@
  *
  *   1. a spaces-enabled PDS + PLC (@atproto/dev-env, spaces-alpha snapshot)
  *   2. the mock issuer as a managing app, registered on the local PLC
- *   3. Ben's subscriber space, policy managing-app → the issuer
+ *   3. Ben's subscriber space, readPolicy managing-app → the issuer
  *   4. Anna denied → fake tip settles → Anna admitted → reads gated post
  *   5. lapse → next credential mint denied again
  *
@@ -88,13 +88,17 @@ const main = async () => {
   issuer.registerService(ben.did, benSigningKey.did())
   info('issuer up; ben registered as a known space authority')
 
-  step(4, 'Ben creates his subscriber space, gated by policy managing-app → the issuer…')
+  step(4, 'Ben creates his subscriber space, read-gated by policy managing-app → the issuer…')
   const benAgent = new AtpAgent({ service: network.pds.url })
   await benAgent.login({ identifier: ben.handle, password: 'ben-pass' })
   const created = await benAgent.com.atproto.simplespace.createSpace({
     type: SPACE_TYPE,
     skey: 'self',
-    policy: { $type: 'com.atproto.simplespace.defs#managingAppPolicy', managingApp },
+    readPolicy: { $type: 'com.atproto.simplespace.defs#managingAppPolicy', managingApp },
+    // Only Ben writes here. A member-list policy over a list nobody is on
+    // refuses everyone else, and Ben needs no entry: he is the space authority,
+    // whom the host admits without consulting the managing app.
+    writePolicy: { $type: 'com.atproto.simplespace.defs#memberListPolicy' },
     appAccess: { $type: 'com.atproto.simplespace.defs#open' },
   })
   const spaceUri: string = created.data.uri
