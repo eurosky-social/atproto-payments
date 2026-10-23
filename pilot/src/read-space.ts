@@ -2,13 +2,13 @@
  * Supporter side, against any spaces PDS: try to enter the space. The PDS
  * phones the issuer backend (managing app) and the answer follows the ledger.
  * DENIED before subscribing, the gated post after — run it twice around a
- * subscribe click in Flashes. This is the investor money-shot window.
+ * subscription in any app that sells through the issuer.
  *
  *   PDS_URL=… HANDLE=… PASSWORD=… SPACE='at://…' REPO=did:… RKEY=… \
  *     node dist/read-space.js
  */
 import { writeFileSync } from 'node:fs'
-import { getSpaceBlob, login, readGatedRecord, requestSpaceCredential, requireEnv } from './spaces-demo.js'
+import { getSpaceBlob, login, readGatedRecord, requestSpaceCredential, requireEnv, resolveKemKey } from './spaces-demo.js'
 
 const COLLECTION = process.env.COLLECTION ?? 'network.eurosky.payments.gatedPost'
 
@@ -32,6 +32,9 @@ const main = async () => {
     repo: requireEnv('REPO'),
     collection: COLLECTION,
     rkey: requireEnv('RKEY'),
+    // The creator's #atproto_kem key, which getRecord's MAC is keyed against.
+    // PLC_URL points a non-production directory at it.
+    kemKey: await resolveKemKey(requireEnv('REPO'), process.env.PLC_URL),
   })
   const value = record.value as { text?: string; image?: { ref?: { $link?: string } } }
   console.log(`🔓 "${String(value.text ?? '')}"`)

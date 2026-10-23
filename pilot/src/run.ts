@@ -13,10 +13,9 @@
 import { AtpAgent } from '@atproto/api'
 import { Secp256k1Keypair } from '@atproto/crypto'
 import { TestNetworkNoAppView } from '@atproto/dev-env'
-import { JoseKey } from '@atproto/jwk-jose'
-import { createDpopProof } from '@atproto/space'
 import * as plc from '@did-plc/lib'
 import { createMockIssuer, type IssuerIdentity } from '@atproto-payments/mock-issuer'
+import { readGatedRecord, requestSpaceCredential as requestCredential, resolveKemKey } from './spaces-demo.js'
 
 const MOCK_PORT = 4025
 const MOCK_URL = `http://127.0.0.1:${MOCK_PORT}`
@@ -25,10 +24,6 @@ const GATED_COLLECTION = 'network.eurosky.payments.gatedPost'
 
 const step = (n: number, msg: string) => console.log(`\n[${n}] ${msg}`)
 const info = (msg: string) => console.log(`    ${msg}`)
-
-type CredentialAttempt =
-  | { ok: true; credential: string; key: JoseKey }
-  | { ok: false; error: string; message?: string }
 
 const main = async () => {
   step(1, 'Starting a local ATProto network (PLC + spaces-enabled PDS)…')
@@ -92,7 +87,7 @@ const main = async () => {
   const benAgent = new AtpAgent({ service: network.pds.url })
   await benAgent.login({ identifier: ben.handle, password: 'ben-pass' })
   const created = await benAgent.com.atproto.simplespace.createSpace({
-    type: SPACE_TYPE,
+    spaceType: SPACE_TYPE,
     skey: 'self',
     readPolicy: { $type: 'com.atproto.simplespace.defs#managingAppPolicy', managingApp },
     // Only Ben writes here. A member-list policy over a list nobody is on
@@ -122,47 +117,14 @@ const main = async () => {
   const annaAgent = new AtpAgent({ service: network.pds.url })
   await annaAgent.login({ identifier: anna.handle, password: 'anna-pass' })
 
-  const requestSpaceCredential = async (): Promise<CredentialAttempt> => {
-    const delegation = await annaAgent.com.atproto.space.getDelegationToken({
-      space: spaceUri as never,
+  const requestSpaceCredential = () => requestCredential(annaAgent, network.pds.url, spaceUri)
+  // getRecord answers are MAC'd against Ben's #atproto_kem key, which the local
+  // PDS published to the local PLC when it created his account.
+  const benKemKey = await resolveKemKey(ben.did, network.plc.url)
+  const readGatedPost = (credential: string, key: Parameters<typeof readGatedRecord>[1]['key']) =>
+    readGatedRecord(network.pds.url, {
+      credential, key, space: spaceUri, repo: ben.did, collection: GATED_COLLECTION, rkey, kemKey: benKemKey,
     })
-    const key = await JoseKey.generate(['ES256'])
-    const url = `${network.pds.url}/xrpc/com.atproto.space.getSpaceCredential`
-    const request = new Request(url, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: `Bearer ${delegation.data.token}`,
-      },
-      body: JSON.stringify({ space: spaceUri }),
-    })
-    request.headers.set('dpop', await createDpopProof(key, { htm: 'POST', htu: url }))
-    const res = await fetch(request)
-    const body = (await res.json()) as Record<string, unknown>
-    if (!res.ok) {
-      return { ok: false, error: String(body.error), message: body.message as string | undefined }
-    }
-    return { ok: true, credential: body.credential as string, key }
-  }
-
-  const readGatedPost = async (credential: string, key: JoseKey) => {
-    const url = new URL(`${network.pds.url}/xrpc/com.atproto.space.getRecord`)
-    url.searchParams.set('space', spaceUri)
-    url.searchParams.set('repo', ben.did)
-    url.searchParams.set('collection', GATED_COLLECTION)
-    url.searchParams.set('rkey', rkey)
-    const request = new Request(url, {
-      headers: { authorization: `DPoP ${credential}` },
-    })
-    request.headers.set(
-      'dpop',
-      await createDpopProof(key, { htm: 'GET', htu: request.url, credential }),
-    )
-    const res = await fetch(request)
-    const body = (await res.json()) as Record<string, unknown>
-    if (!res.ok) throw new Error(`getRecord failed: ${JSON.stringify(body)}`)
-    return body
-  }
 
   step(6, 'Anna asks for space access BEFORE paying — the doorman phones the issuer…')
   const before = await requestSpaceCredential()
@@ -180,7 +142,7 @@ const main = async () => {
   step(8, 'Anna asks again — the doorman phones the issuer, the issuer says yes…')
   const after = await requestSpaceCredential()
   if (!after.ok) throw new Error(`expected a credential, got ${after.error}: ${after.message}`)
-  info('space credential minted (DPoP-bound, 2h)')
+  info('space credential minted (bound to a key only Anna holds, ≤10 min)')
 
   step(9, "Anna reads Ben's subscriber-only post with the space credential…")
   const gated = await readGatedPost(after.credential, after.key)
@@ -197,8 +159,8 @@ const main = async () => {
   info(`DENIED again (${lapsed.error}) — billing truth IS access truth, no lists synced`)
 
   console.log('\n✔ pilot complete: pay → the space opens in any app; lapse → it closes.')
-  console.log('  (Outstanding space credentials live ≤2h — revocation happens at the mint boundary,')
-  console.log('   exactly as designed in proposal 0016 and mirrored by our ≤7d entitlement cards.)')
+  console.log('  (Outstanding space credentials live ≤10 min by default — revocation happens at the')
+  console.log('   mint boundary, exactly as designed in proposal 0016 and mirrored by our ≤7d cards.)')
 
   issuer.server.close()
   await network.close()
