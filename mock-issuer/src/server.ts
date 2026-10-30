@@ -7,7 +7,7 @@ import type { IssuerIdentity } from './identity.js'
 
 const GET_CREDENTIALS = 'network.eurosky.payments.getCredentials'
 const CHECK_ENTITLEMENT = 'network.eurosky.payments.checkEntitlement'
-const CHECK_USER_ACCESS = 'com.atproto.simplespace.checkUserAccess'
+const CHECK_USER_ACCESS = 'com.atproto.managedspace.checkUserAccess'
 
 export interface MockIssuer {
   server: Server
@@ -157,19 +157,18 @@ export const createMockIssuer = (identity: IssuerIdentity): MockIssuer => {
       })
     }
 
-    // ── XRPC: simplespace checkUserAccess — the managing-app socket ───────
+    // ── XRPC: managedspace checkUserAccess — the managing-app socket ──────
     // Query per the permissioned-data branch lexicon: params
     // space/user/access/clientId, output {authorized}, service-authed by the
-    // space authority.
+    // space authority. It was com.atproto.simplespace.checkUserAccess until the
+    // alpha's 2026-10-29 release.
     if (req.method === 'GET' && pathname === `/xrpc/${CHECK_USER_ACCESS}`) {
       const space = url.searchParams.get('space')
       const user = url.searchParams.get('user')
-      // A space gates reading and writing separately since 2026-09-10, and the
-      // authority says which it is asking about. A host still on the older
-      // build sends nothing, and the only question it ever asked was read.
-      const access = url.searchParams.get('access') ?? 'read'
-      if (typeof space !== 'string' || !isDid(user)) {
-        return xrpcError(res, 400, 'InvalidRequest', 'space (space-ref) and user (DID) are required')
+      // A managed space asks about reading and about writing, and says which.
+      const access = url.searchParams.get('access')
+      if (typeof space !== 'string' || !isDid(user) || !access) {
+        return xrpcError(res, 400, 'InvalidRequest', 'space (space-ref), user (DID) and access are required')
       }
       const authority = spaceAuthority(space)
       if (!authority) return xrpcError(res, 400, 'InvalidRequest', 'space is not a valid space reference')

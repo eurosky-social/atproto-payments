@@ -190,36 +190,36 @@ describe('lapse and chargeback', () => {
 
 describe('checkUserAccess — the Spaces managing-app socket', () => {
   const path = (space: string) =>
-    `/xrpc/com.atproto.simplespace.checkUserAccess?space=${encodeURIComponent(space)}&user=${ANNA}`
+    `/xrpc/com.atproto.managedspace.checkUserAccess?space=${encodeURIComponent(space)}&user=${ANNA}`
 
   it('grants and revokes space access on payment state', async () => {
     await post('/admin/spaces', { space: SPACE, creator: BEN })
     await post('/admin/entitlements', { subject: ANNA, creator: BEN, tier: 'gold' })
-    const jwt = await serviceJwt(authorityKey, BEN, issuer.identity.did, 'com.atproto.simplespace.checkUserAccess')
+    const jwt = await serviceJwt(authorityKey, BEN, issuer.identity.did, 'com.atproto.managedspace.checkUserAccess')
 
-    const yes = await get(path(SPACE), jwt)
+    const yes = await get(`${path(SPACE)}&access=read`, jwt)
     expect(yes.body).toEqual({ authorized: true })
 
     await post('/admin/lapse', { subject: ANNA, creator: BEN })
-    const no = await get(path(SPACE), jwt)
+    const no = await get(`${path(SPACE)}&access=read`, jwt)
     expect(no.body).toEqual({ authorized: false })
   })
 
   it('answers only the space authority', async () => {
     const jwt = await serviceJwt(
-      feedgenKey, FEEDGEN, issuer.identity.did, 'com.atproto.simplespace.checkUserAccess',
+      feedgenKey, FEEDGEN, issuer.identity.did, 'com.atproto.managedspace.checkUserAccess',
     )
-    const { status } = await get(path(SPACE), jwt)
+    const { status } = await get(`${path(SPACE)}&access=read`, jwt)
     expect(status).toBe(401)
   })
 
-  // Since 2026-09-10 the authority asks about reading and writing separately.
-  // An issuer that answers both from the ledger hands every paying supporter a
-  // writer's seat in the creator's space.
+  // A managed space asks about reading and writing alike. An issuer that
+  // answers both from the ledger hands every paying supporter a writer's seat
+  // in the creator's space.
   it('admits a paying supporter to read and still refuses the write', async () => {
     await post('/admin/spaces', { space: SPACE, creator: BEN })
     await post('/admin/entitlements', { subject: ANNA, creator: BEN, tier: 'gold' })
-    const jwt = await serviceJwt(authorityKey, BEN, issuer.identity.did, 'com.atproto.simplespace.checkUserAccess')
+    const jwt = await serviceJwt(authorityKey, BEN, issuer.identity.did, 'com.atproto.managedspace.checkUserAccess')
 
     const read = await get(`${path(SPACE)}&access=read`, jwt)
     expect(read.body).toEqual({ authorized: true })
@@ -234,9 +234,19 @@ describe('checkUserAccess — the Spaces managing-app socket', () => {
 
   it('denies unknown spaces without leaking why', async () => {
     const unknownSpace = `at://${BEN}/space/network.eurosky.payments.subscribers/other`
-    const jwt = await serviceJwt(authorityKey, BEN, issuer.identity.did, 'com.atproto.simplespace.checkUserAccess')
-    const { body } = await get(path(unknownSpace), jwt)
+    const jwt = await serviceJwt(authorityKey, BEN, issuer.identity.did, 'com.atproto.managedspace.checkUserAccess')
+    const { body } = await get(`${path(unknownSpace)}&access=read`, jwt)
     expect(body).toEqual({ authorized: false })
+  })
+
+  // Required since the alpha's 2026-10-29 release; the hosts that left it out
+  // only ever called the method's old name.
+  it('refuses a check that does not say what access it is for', async () => {
+    await post('/admin/spaces', { space: SPACE, creator: BEN })
+    await post('/admin/entitlements', { subject: ANNA, creator: BEN, tier: 'gold' })
+    const jwt = await serviceJwt(authorityKey, BEN, issuer.identity.did, 'com.atproto.managedspace.checkUserAccess')
+    const { status } = await get(path(SPACE), jwt)
+    expect(status).toBe(400)
   })
 })
 

@@ -1,7 +1,7 @@
 {
   "name": "@atproto-payments/mock-issuer",
   "version": "0.1.0",
-  "description": "Mock payment issuer for demos and integration tests: fake ledger (settle/lapse/chargeback), getCredentials + checkEntitlement with standing rules, and the simplespace checkUserAccess socket for the ATProto Spaces managing-app policy. Never touches real money.",
+  "description": "Mock payment issuer for demos and integration tests: fake ledger (settle/lapse/chargeback), getCredentials + checkEntitlement with standing rules, and the managedspace checkUserAccess socket for the ATProto Spaces managed-space policy. Never touches real money.",
   "license": "Apache-2.0",
   "private": true,
   "type": "module",

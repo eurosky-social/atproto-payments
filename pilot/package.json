@@ -1,7 +1,7 @@
 {
   "name": "@atproto-payments/pilot",
   "version": "0.1.0",
-  "description": "Spaces-alpha pilot: local spaces-enabled PDS via @atproto/dev-env, a creator space gated by policy managing-app pointing at @atproto-payments/mock-issuer, and the end-to-end demo \u2014 fake tip opens the space, lapse closes it. Alpha protocol surface: demo only, never real money.",
+  "description": "Spaces-alpha pilot: local spaces-enabled PDS via @atproto/dev-env, a creator space under a managedspace policy naming @atproto-payments/mock-issuer, and the end-to-end demo \u2014 fake tip opens the space, lapse closes it. Alpha protocol surface: demo only, never real money.",
   "license": "Apache-2.0",
   "private": true,
   "type": "module",
@@ -14,13 +14,13 @@
     "create-account": "pnpm build && node dist/create-account.js"
   },
   "dependencies": {
-    "@atproto/api": "0.0.0-spaces-alpha-20261022141228",
-    "@atproto/dev-env": "0.0.0-spaces-alpha-20261022141228",
-    "@atproto/space": "0.0.0-spaces-alpha-20261022141228",
+    "@atproto/api": "0.0.0-spaces-alpha-20261029171913",
+    "@atproto/dev-env": "0.0.0-spaces-alpha-20261029171913",
+    "@atproto/space": "0.0.0-spaces-alpha-20261029171913",
     "@did-plc/lib": "0.0.1",
     "@atproto-payments/attest-core": "workspace:*",
     "@atproto-payments/mock-issuer": "workspace:*",
-    "@atproto/crypto": "0.0.0-spaces-alpha-20261022141228"
+    "@atproto/crypto": "0.0.0-spaces-alpha-20261029171913"
   },
   "devDependencies": {
     "@types/node": "^26.3.0",

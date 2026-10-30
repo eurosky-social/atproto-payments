@@ -30,16 +30,13 @@ export const createSpaceWithManagingApp = async (
   agent: AtpAgent,
   opts: { type: string; skey: string; managingApp: string },
 ): Promise<string> => {
-  const created = await agent.com.atproto.simplespace.createSpace({
+  const created = await agent.com.atproto.space.createSpace({
     // `spaceType` since the alpha's 2026-10-01 release.
     spaceType: opts.type,
     skey: opts.skey,
-    readPolicy: { $type: 'com.atproto.simplespace.defs#managingAppPolicy', managingApp: opts.managingApp },
-    // Only Ben writes here. A member-list policy over a list nobody is on
-    // refuses everyone else, and Ben needs no entry: he is the space authority,
-    // whom the host admits without consulting the managing app.
-    writePolicy: { $type: 'com.atproto.simplespace.defs#memberListPolicy' },
-    appAccess: { $type: 'com.atproto.simplespace.defs#open' },
+    // The managing app decides every reader and writer but the creator, who is
+    // the space authority and needs nobody's answer. It refuses every write.
+    policy: { $type: 'com.atproto.managedspace.policy', managingApp: opts.managingApp },
   })
   return created.data.uri
 }

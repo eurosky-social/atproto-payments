@@ -1,6 +1,6 @@
 # @atproto-payments/mock-issuer
 
-A fake payment issuer for demos and integration tests. It has everything a real issuer has **except money**: a ledger you flip by hand (settle / lapse / chargeback), credential minting via [attest-core](../attest-core/), the `checkEntitlement` query with the spec's standing rules, and the `com.atproto.simplespace.checkUserAccess` socket so it can serve as a **managing app for an ATProto Space** (the Spaces-alpha pilot, PLAN 2.7).
+A fake payment issuer for demos and integration tests. It has everything a real issuer has **except money**: a ledger you flip by hand (settle / lapse / chargeback), credential minting via [attest-core](../attest-core/), the `checkEntitlement` query with the spec's standing rules, and the `com.atproto.managedspace.checkUserAccess` socket so it can serve as a **managing app for an ATProto Space** (the Spaces-alpha pilot, PLAN 2.7).
 
 The admin surface is unauthenticated by design and the server binds to `127.0.0.1` — this is a demo tool, never expose it.
 
@@ -41,7 +41,7 @@ curl -s "$BASE/xrpc/network.eurosky.payments.checkEntitlement?subject=$ANNA&crea
 # 5. Spaces: gate Ben's subscriber space on the ledger
 curl -s -X POST $BASE/admin/spaces \
   -d "{\"space\":\"at://$BEN/space/network.eurosky.payments.subscribers/self\",\"creator\":\"$BEN\"}"
-#    (the space authority then calls POST /xrpc/com.atproto.simplespace.checkUserAccess
+#    (the space authority then calls GET /xrpc/com.atproto.managedspace.checkUserAccess
 #     with inter-service auth; see tests/server.test.ts for the exact shape)
 
 # 6. Chargeback → everything shuts off: cards stop renewing, checks flip,
@@ -59,7 +59,7 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 |---|---|---|
 | `GET /xrpc/network.eurosky.payments.getCredentials` | supporter bearer session, or the supporter's own service-auth JWT (SPEC §5.0) | Freshly minted `ent+jwt` cards for the caller's active entitlements. Lapsed/chargebacked entitlements simply stop appearing (SPEC §3.3). |
 | `GET /xrpc/network.eurosky.payments.checkEntitlement` | the subject (session or their own service JWT) OR a service JWT (`lxm` bound) from a DID in the creator's `authorizedServices` | `{active, tier?, expiresAt?}`; everyone else gets uniform `NoStanding` (SPEC §5.2). |
-| `GET /xrpc/com.atproto.simplespace.checkUserAccess` | service JWT from the space's own authority | `{authorized}` from the ledger, via the space→creator mapping. The managing-app socket, matching the permissioned-data branch lexicon (query with `space`, `user`, `clientId?` params). |
+| `GET /xrpc/com.atproto.managedspace.checkUserAccess` | service JWT from the space's own authority | `{authorized}` from the ledger, via the space→creator mapping, for `access=read`; every `write` check is refused. The managing-app socket, matching the permissioned-data branch lexicon (query with `space`, `user`, `access`, `clientId?` params). |
 
 **Admin (demo only):** `GET /admin/identity`, `GET /admin/state`, `POST /admin/sessions` (bearer for a DID), `POST /admin/services` (register a service DID → did:key), `POST /admin/offers` (creator's `authorizedServices`), `POST /admin/entitlements` (settle), `POST /admin/lapse`, `POST /admin/chargeback`, `POST /admin/spaces` (space URI → creator), `POST /admin/voucher` (badge countersignature).
 

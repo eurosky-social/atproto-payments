@@ -18,7 +18,7 @@ Verifiability does not require publicity. This spec keeps the graph out of the n
 |---|---|
 | [`spec/`](spec/) | The normative draft ([SPEC.md](spec/SPEC.md)) and four lexicons. [EXPLAINER.md](spec/EXPLAINER.md) is the same design in plain language, with a worked example |
 | [`attest-core/`](attest-core/) | TypeScript verifier and credential library, transport-free — DID resolution and record fetching are injected. Ships the interop test vectors |
-| [`mock-issuer/`](mock-issuer/) | A fake issuer: everything a real one has except money. A ledger you flip by hand, the `checkEntitlement` query with the standing rules, and the `com.atproto.simplespace.checkUserAccess` socket |
+| [`mock-issuer/`](mock-issuer/) | A fake issuer: everything a real one has except money. A ledger you flip by hand, the `checkEntitlement` query with the standing rules, and the `com.atproto.managedspace.checkUserAccess` socket |
 | [`pilot/`](pilot/) | The whole story end to end in ~15 seconds against a local spaces-alpha PDS: denied → paid → space credential minted → gated post read → lapsed → denied |
 
 ```
